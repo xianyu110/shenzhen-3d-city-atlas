@@ -9,7 +9,7 @@ const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 18
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
 const controls = new OrbitControls(camera, canvas); controls.target.set(0, 0, 0); controls.enableDamping = true; controls.dampingFactor = 0.06; controls.minDistance = 18; controls.maxDistance = 75; controls.maxPolarAngle = Math.PI / 2.08;
 scene.add(new THREE.HemisphereLight(0xa6d7e8, 0x102434, 1.7)); const sun = new THREE.DirectionalLight(0xffdfb0, 2.4); sun.position.set(-30, 45, 22); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); scene.add(sun);
-const city = createCity(scene); const tooltip = document.querySelector('#tooltip');
+const city = await createCity(scene); const tooltip = document.querySelector('#tooltip');
 let focusTarget = new THREE.Vector3(0, 0, 0); let focusCamera = new THREE.Vector3(33, 32, 40);
 addEventListener('city-focus', (event) => { const { x, z } = event.detail; focusTarget.set(x, 0, z); focusCamera.set(x + 25, 27, z + 25); });
 addEventListener('city-camera', (event) => { const { x, z, distance } = event.detail; focusTarget.set(x, 0, z); focusCamera.set(x + distance * .65, distance * .7, z + distance * .65); });

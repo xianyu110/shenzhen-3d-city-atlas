@@ -14,7 +14,7 @@ function building(group, x, z, w, d, h, mat, label = '', district = 'CITY', rota
 function tower(group, x, z, h, radius, mat, label, district, kind = 'taper') { const root = new THREE.Group(); root.position.set(x, 0, z); root.userData.district = district; let body; if (kind === 'needle') body = mesh(new THREE.CylinderGeometry(radius * .48, radius, h, 6), mat, [0, h / 2, 0]); else if (kind === 'spring') body = mesh(new THREE.CylinderGeometry(radius * .62, radius, h, 12), mat, [0, h / 2, 0]); else body = mesh(new THREE.CylinderGeometry(radius * .78, radius, h, 8), mat, [0, h / 2, 0]); body.userData = { label, district }; root.add(body); root.add(mesh(new THREE.CylinderGeometry(radius * .84, radius * .84, .16, 12), mats.glass, [0, h * .68, 0])); if (kind === 'needle') root.add(mesh(new THREE.CylinderGeometry(.08, .08, 4, 6), mats.coral, [0, h + 2, 0])); const sign = makeLabel(label, mat === mats.coral ? '#ffb1a1' : '#93fff5'); sign.position.set(0, h + 1.4, radius + .1); sign.rotation.x = -Math.PI / 2.8; root.add(sign); group.add(root); return root; }
 function hill(group, x, z, w, h, mat, label = '') { const root = new THREE.Group(); root.position.set(x, 0, z); const m = mesh(new THREE.ConeGeometry(1, h, 8), mat, [0, h / 2, 0]); m.scale.set(w, 1, w * .7); root.add(m); if (label) { const sign = makeLabel(label, '#b8e36b'); sign.position.set(0, h + .4, 0); sign.rotation.x = -Math.PI / 2; root.add(sign); } group.add(root); return root; }
 
-export function createCity(scene) {
+export async function createCity(scene) {
   const root = new THREE.Group(); scene.add(root);
   const layers = { landmarks: new THREE.Group(), roads: new THREE.Group(), water: new THREE.Group() }; Object.values(layers).forEach((g) => root.add(g));
   const pickables = []; const landmarks = layers.landmarks; const pulse = [];
@@ -48,6 +48,23 @@ export function createCity(scene) {
   const civic = building(landmarks, -8, -8, 9, 2.8, 4.2, mats.amber, '市民中心', 'FUTIAN', -.03); civic.add(box([10, .16, 3.3], mats.coral, [0, 4.35, 0])); pickables.push(civic);
   const port = new THREE.Group(); port.position.set(30, 0, 7); port.userData.district = 'YANTIAN'; port.add(box([8, .7, 2.8], mats.block2, [0, .35, 0])); for (let i = -3; i <= 3; i += 2) { port.add(box([.22, 5 + Math.abs(i) * .3, .22], mats.amber, [i, 3, 0])); port.add(box([2.2, .16, .16], mats.amber, [i + 1, 5 + Math.abs(i) * .3, 0])); } const portLabel = makeLabel('盐田港', '#ffd38a'); portLabel.position.set(0, 6.5, 0); portLabel.rotation.x = -Math.PI / 2.8; port.add(portLabel); landmarks.add(port); pickables.push(port);
   const qianhai = building(landmarks, -30, -10, 4.5, 2.4, 2.2, mats.lime, '前海石公园', 'QIANHAI'); qianhai.add(mesh(new THREE.TorusGeometry(1.2, .18, 8, 20, Math.PI), mats.lime, [0, 2.3, 0], [Math.PI / 2, 0, 0])); pickables.push(qianhai);
+  // OpenStreetMap geometry gives the central city a real street and block rhythm. The data is bundled locally at build time.
+  try {
+    const [buildingResponse, roadResponse] = await Promise.all([fetch('./data/shenzhen-buildings-compact.json'), fetch('./data/shenzhen-roads-compact.json')]);
+    const [buildingData, roadData] = await Promise.all([buildingResponse.json(), roadResponse.json()]);
+    const osmLandmarks = new THREE.Group(); osmLandmarks.name = 'OSM buildings'; landmarks.add(osmLandmarks);
+    const osmRoads = new THREE.Group(); osmRoads.name = 'OSM roads'; layers.roads.add(osmRoads);
+    const buildingMaterials = [mats.block, mats.block2, material(0x214d5e), material(0x1b4050)];
+    buildingData.elements.forEach((item, i) => {
+      if (!item.p || item.p.length < 3) return;
+      const shape = new THREE.Shape(); item.p.forEach(([x, z], index) => index ? shape.lineTo(x, -z) : shape.moveTo(x, -z)); shape.closePath();
+      const geometry = new THREE.ExtrudeGeometry(shape, { depth: Math.max(1.1, item.h || 3), bevelEnabled: false }); geometry.rotateX(-Math.PI / 2);
+      const b = mesh(geometry, buildingMaterials[i % buildingMaterials.length], [0, .45, 0]); b.userData = { district: 'CITY', label: '' }; osmLandmarks.add(b);
+      if (i % 9 === 0 && item.h > 8) { const roof = box([.16, .08, .16], mats.glass, [item.p[0][0], item.h + .55, -item.p[0][1]]); roof.position.y = item.h + .55; }
+    });
+    const lineMaterial = new THREE.LineBasicMaterial({ color: C.lane, transparent: true, opacity: .52 });
+    roadData.elements.slice(0, 950).forEach((item) => { if (!item.p || item.p.length < 2) return; const points = item.p.map(([x, z]) => new THREE.Vector3(x, .34, -z)); const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), lineMaterial); line.userData = { label: item.n || '城市道路' }; osmRoads.add(line); });
+  } catch (error) { console.warn('OSM data unavailable, using generated city fabric.', error); }
   // Waterfront promenade and small ferry piers.
   for (let x = -31; x <= 20; x += 2.5) layers.water.add(box([.08, .05, .25], mats.cyan, [x, .62, -19.6])); for (let z = -10; z <= 3; z += 3) layers.water.add(box([4, .05, .12], mats.waterEdge, [23, .62, z]));
   [['NANSHAN', -18, 5], ['FUTIAN', -4, 10], ['LUOHU', 9, 8], ['QIANHAI', -29, -3], ['YANTIAN', 28, 15], ['BAOAN', -29, 17], ['LONGGANG', 18, 24]].forEach(([text, x, z]) => { const l = makeLabel(text, '#8faebb'); l.position.set(x, .5, z); l.rotation.x = -Math.PI / 2; root.add(l); });
