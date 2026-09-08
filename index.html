@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#06121d" />
+    <title>SHENZHEN / 3D CITY ATLAS</title>
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="city" aria-label="深圳 3D 城市地图"></canvas>
+      <div class="hud-glow"></div>
+      <header class="topbar"><div class="brand"><span class="brand-dot"></span><div><b>SHENZHEN</b><small>3D CITY ATLAS / 2026</small></div></div><nav class="view-tabs" aria-label="地图视图"><button class="active" data-view="city">城市总览</button><button data-view="bay">湾区关系</button><button data-view="night">夜景模式</button></nav><div class="top-meta"><span class="live-dot"></span><span>LIVE MODEL</span><span class="coords">22.5431° N&nbsp;&nbsp;114.0579° E</span></div></header>
+      <aside class="side-panel"><div class="panel-kicker">CITY SNAPSHOT</div><h1>深圳<br /><em>向海而生</em></h1><p class="intro">从罗湖口岸到前海湾，沿着城市天际线探索一座持续生长的创新之城。</p><div class="metric-grid"><div><strong>1,997</strong><span>KM² CITY AREA</span></div><div><strong>17.6M</strong><span>URBAN POP.</span></div><div><strong>9</strong><span>KEY DISTRICTS</span></div><div><strong>∞</strong><span>POSSIBILITIES</span></div></div><div class="panel-divider"></div><div class="layer-title"><span>MAP LAYERS</span><button id="reset-view">RESET VIEW</button></div><label class="layer"><input type="checkbox" data-layer="landmarks" checked /><i class="check"></i><span>地标建筑</span><b class="layer-count">08</b></label><label class="layer"><input type="checkbox" data-layer="roads" checked /><i class="check"></i><span>城市道路</span><b class="layer-count">24</b></label><label class="layer"><input type="checkbox" data-layer="water" checked /><i class="check"></i><span>海岸与水系</span><b class="layer-count">03</b></label><div class="legend"><span><i class="swatch cyan"></i>核心城区</span><span><i class="swatch coral"></i>文化地标</span><span><i class="swatch lime"></i>生态空间</span></div></aside>
+      <section class="districts" aria-label="重点区域"><div class="district-head"><span>FOCUS AREAS</span><b>点击查看</b></div><div id="district-list"></div></section>
+      <footer class="bottombar"><div class="hint"><kbd>拖拽</kbd>旋转&nbsp;&nbsp;<kbd>滚轮</kbd>缩放&nbsp;&nbsp;<kbd>右键</kbd>平移</div><div class="scale"><span>0</span><i></i><span>5 km</span></div><div class="credit">MODELLED WITH <b>BLENDER</b> × <b>THREE.JS</b></div></footer>
+      <div id="tooltip" class="tooltip" role="status"></div><div id="loading" class="loading"><span></span><b>ASSEMBLING SHENZHEN</b><small>GENERATIVE CITY MODEL / 01</small></div>
+    </main><script type="module" src="./src/main.js"></script>
+  </body>
+</html>

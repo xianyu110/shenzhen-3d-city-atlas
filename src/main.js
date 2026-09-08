@@ -1,0 +1,25 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import './styles.css';
+import { createCity } from './environment.js';
+
+const canvas = document.querySelector('#city');
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x06121d); scene.fog = new THREE.Fog(0x06121d, 45, 115);
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 180); camera.position.set(33, 32, 40);
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+const controls = new OrbitControls(camera, canvas); controls.target.set(0, 0, 0); controls.enableDamping = true; controls.dampingFactor = 0.06; controls.minDistance = 18; controls.maxDistance = 75; controls.maxPolarAngle = Math.PI / 2.08;
+scene.add(new THREE.HemisphereLight(0xa6d7e8, 0x102434, 1.7)); const sun = new THREE.DirectionalLight(0xffdfb0, 2.4); sun.position.set(-30, 45, 22); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); scene.add(sun);
+const city = createCity(scene); const tooltip = document.querySelector('#tooltip');
+let focusTarget = new THREE.Vector3(0, 0, 0); let focusCamera = new THREE.Vector3(33, 32, 40);
+addEventListener('city-focus', (event) => { const { x, z } = event.detail; focusTarget.set(x, 0, z); focusCamera.set(x + 25, 27, z + 25); });
+addEventListener('city-camera', (event) => { const { x, z, distance } = event.detail; focusTarget.set(x, 0, z); focusCamera.set(x + distance * .65, distance * .7, z + distance * .65); });
+const districts = [['南山', 'NANSHAN', '科技与海岸', 'cyan'], ['福田', 'FUTIAN', '城市心脏', 'coral'], ['罗湖', 'LUOHU', '口岸记忆', 'amber'], ['前海', 'QIANHAI', '湾区客厅', 'lime'], ['盐田', 'YANTIAN', '山海之间', 'blue']];
+const list = document.querySelector('#district-list'); districts.forEach(([name, en, desc, color], i) => { const button = document.createElement('button'); button.className = `district-card ${i === 0 ? 'selected' : ''}`; button.innerHTML = `<span class="district-dot ${color}"></span><span><b>${name}</b><small>${en} · ${desc}</small></span><em>↗</em>`; button.addEventListener('click', () => { document.querySelectorAll('.district-card').forEach((el) => el.classList.remove('selected')); button.classList.add('selected'); city.focusDistrict(name); }); list.appendChild(button); });
+document.querySelectorAll('[data-view]').forEach((button) => button.addEventListener('click', () => { document.querySelectorAll('[data-view]').forEach((el) => el.classList.remove('active')); button.classList.add('active'); city.setMode(button.dataset.view); }));
+document.querySelectorAll('[data-layer]').forEach((input) => input.addEventListener('change', () => city.toggleLayer(input.dataset.layer, input.checked)));
+document.querySelector('#reset-view').addEventListener('click', () => { controls.target.set(0, 0, 0); camera.position.set(33, 32, 40); document.querySelector('[data-view="city"]').click(); });
+const raycaster = new THREE.Raycaster(); const pointer = new THREE.Vector2();
+canvas.addEventListener('pointermove', (event) => { pointer.x = (event.clientX / innerWidth) * 2 - 1; pointer.y = -(event.clientY / innerHeight) * 2 + 1; raycaster.setFromCamera(pointer, camera); const hit = raycaster.intersectObjects(city.pickables, true)[0]; if (hit?.object.userData.label) { tooltip.textContent = hit.object.userData.label; tooltip.style.left = `${event.clientX + 14}px`; tooltip.style.top = `${event.clientY + 14}px`; tooltip.classList.add('show'); } else tooltip.classList.remove('show'); });
+canvas.addEventListener('pointerdown', (event) => { if (event.button !== 0) return; pointer.x = (event.clientX / innerWidth) * 2 - 1; pointer.y = -(event.clientY / innerHeight) * 2 + 1; raycaster.setFromCamera(pointer, camera); const hit = raycaster.intersectObjects(city.pickables, true)[0]; if (hit?.object.userData.district) city.focusDistrict(hit.object.userData.district); });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+const clock = new THREE.Clock(); function frame() { const delta = clock.getDelta(); controls.target.lerp(focusTarget, Math.min(1, delta * 3)); camera.position.lerp(focusCamera, Math.min(1, delta * 2.2)); controls.update(); city.update(delta, clock.elapsedTime); renderer.render(scene, camera); requestAnimationFrame(frame); } frame(); setTimeout(() => document.querySelector('#loading').classList.add('done'), 900);
