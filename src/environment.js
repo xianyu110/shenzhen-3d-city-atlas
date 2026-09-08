@@ -39,12 +39,12 @@ export async function createCity(scene) {
   route(layers.roads, [[-28, -2], [-18, 5], [-9, 12]], .62); route(layers.roads, [[9, 3], [17, 9], [28, 10]], .62);
   // District-scale urban fabric, seeded for a stable render.
   const seeded = (n) => { const v = Math.sin(n * 12.9898) * 43758.5453; return v - Math.floor(v); };
-  let index = 1; for (let x = -31; x <= 31; x += 4.2) for (let z = -12; z <= 19; z += 4.2) { const nearBay = z < -16 || (x > 22 && z < 0); if (!nearBay && seeded(index++) > .22) { const h = 2 + seeded(index++) * 7.5; const w = 2.1 + seeded(index++) * 1.4; building(landmarks, x + (seeded(index++) - .5) * 1.2, z + (seeded(index++) - .5) * 1.1, w, w * (.8 + seeded(index++) * .35), h, seeded(index++) > .5 ? mats.block : mats.block2); } }
+  let index = 1; for (let x = -31; x <= 31; x += 4.2) for (let z = -12; z <= 19; z += 4.2) { const nearBay = z < -16 || (x > 22 && z < 0); if (!nearBay && seeded(index++) > .7) { const h = 1.4 + seeded(index++) * 3.2; const w = 1.8 + seeded(index++) * 1.1; building(landmarks, x + (seeded(index++) - .5) * 1.2, z + (seeded(index++) - .5) * 1.1, w, w * (.8 + seeded(index++) * .35), h, seeded(index++) > .5 ? mats.block : mats.block2); } }
   // Recognisable landmarks, placed in their actual district relationships.
-  pickables.push(tower(landmarks, -3, -2, 45, 3.3, mats.coral, '平安金融中心', 'FUTIAN', 'needle'));
-  pickables.push(tower(landmarks, 8, 1, 39, 3.1, mats.coral, '京基100', 'LUOHU', 'taper'));
-  pickables.push(tower(landmarks, -18, -6, 33, 3.4, mats.cyan, '春笋', 'NANSHAN', 'spring'));
-  pickables.push(tower(landmarks, -25, -2, 27, 2.5, mats.cyan, '腾讯滨海', 'NANSHAN', 'taper'));
+  pickables.push(tower(landmarks, -3, -2, 13, 2.7, mats.glass, '平安金融中心', 'FUTIAN', 'needle'));
+  pickables.push(tower(landmarks, 8, 1, 11, 2.4, mats.glass, '京基100', 'LUOHU', 'taper'));
+  pickables.push(tower(landmarks, -18, -6, 10, 2.8, mats.glass, '春笋', 'NANSHAN', 'spring'));
+  pickables.push(tower(landmarks, -25, -2, 8, 2.1, mats.glass, '腾讯滨海', 'NANSHAN', 'taper'));
   const civic = building(landmarks, -8, -8, 9, 2.8, 4.2, mats.amber, '市民中心', 'FUTIAN', -.03); civic.add(box([10, .16, 3.3], mats.coral, [0, 4.35, 0])); pickables.push(civic);
   const port = new THREE.Group(); port.position.set(30, 0, 7); port.userData.district = 'YANTIAN'; port.add(box([8, .7, 2.8], mats.block2, [0, .35, 0])); for (let i = -3; i <= 3; i += 2) { port.add(box([.22, 5 + Math.abs(i) * .3, .22], mats.amber, [i, 3, 0])); port.add(box([2.2, .16, .16], mats.amber, [i + 1, 5 + Math.abs(i) * .3, 0])); } const portLabel = makeLabel('盐田港', '#ffd38a'); portLabel.position.set(0, 6.5, 0); portLabel.rotation.x = -Math.PI / 2.8; port.add(portLabel); landmarks.add(port); pickables.push(port);
   const qianhai = building(landmarks, -30, -10, 4.5, 2.4, 2.2, mats.lime, '前海石公园', 'QIANHAI'); qianhai.add(mesh(new THREE.TorusGeometry(1.2, .18, 8, 20, Math.PI), mats.lime, [0, 2.3, 0], [Math.PI / 2, 0, 0])); pickables.push(qianhai);
@@ -58,7 +58,7 @@ export async function createCity(scene) {
     buildingData.elements.forEach((item, i) => {
       if (!item.p || item.p.length < 3) return;
       const shape = new THREE.Shape(); item.p.forEach(([x, z], index) => index ? shape.lineTo(x, -z) : shape.moveTo(x, -z)); shape.closePath();
-      const geometry = new THREE.ExtrudeGeometry(shape, { depth: Math.max(1.1, item.h || 3), bevelEnabled: false }); geometry.rotateX(-Math.PI / 2);
+      const geometry = new THREE.ExtrudeGeometry(shape, { depth: Math.max(.42, Math.min(10, (item.h || 3) * .34)), bevelEnabled: false }); geometry.rotateX(-Math.PI / 2);
       const b = mesh(geometry, buildingMaterials[i % buildingMaterials.length], [0, .45, 0]); b.userData = { district: 'CITY', label: '' }; osmLandmarks.add(b);
       if (i % 9 === 0 && item.h > 8) { const roof = box([.16, .08, .16], mats.glass, [item.p[0][0], item.h + .55, -item.p[0][1]]); roof.position.y = item.h + .55; }
     });
